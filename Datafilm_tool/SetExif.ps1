@@ -69,7 +69,7 @@ do {
                 , ( "-exif:FNumber=" + $exifFNumber ) `
                 , ( "-exif:ISO=" + $exifIso ) `
                 , ( "-exif:FocalLength=`"" + $exifFocalLength + "`"" ) `
-                , ( "-exif:FocalLengthIn35mmFormat=`"" + $exifFocalLengthIn35mmFormat + " mm`"" ) `
+                , ( "-exif:FocalLengthIn35mmFormat=`"" + $exifFocalLengthIn35mmFormat + "`"" ) `
                 , "-exif:FileSource=1" `
                 , ( "-exif:Flash#=" + $exifFlash ) `
                 , ( "-exif:DateTimeOriginal=`"" + $exifDateTimeOriginal + "`"" ) `
