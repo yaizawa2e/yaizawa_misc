@@ -1,7 +1,8 @@
-﻿$WorkPath = "C:\Users\yaizawa\OneDrive - 藍澤 雄一郎\PEN-F\スクリプト開発"
+﻿$WorkPath = "."
 $TargetExt = "jpg"
+$DatafilmJson = "test.json"
 #$DatafilmJson = "PEN-Fテスト.json"
-$DatafilmJson = "続き.json"
+#$DatafilmJson = "続き.json"
 $exiftool = "C:\exiftoolgui\exiftool.exe"
 
 $targetFiles = Get-ChildItem -Path ( Join-Path $WorkPath ( "*." + $TargetExt ) ) | Sort-Object -Property Name
@@ -14,6 +15,7 @@ $jsonData = ( Get-Content ( Join-Path $WorkPath $DatafilmJson ) -Encoding UTF8 |
 
 $exifMake = $jsonData.camera.manufacturer
 $exifModel = $jsonData.camera.model
+$exifSerial = $jsonData.camera.serial
 $exifIso = $jsonData.isoRating
 
 $i = 1
@@ -22,7 +24,14 @@ do {
     foreach ( $frame in $jsonData.frames ) {
         if ( $frame.count -eq $i ) {
             $contFlag = $true
-            
+
+            $existingExif = Invoke-Command -ScriptBlock {
+                & $exiftool `
+                    "-printFormat", "`"Make: `${Make}, Model: `${Model}, Lens Model: `${LensModel}, Software: `${Software}`"" `
+                    "-ignoreMinorErrors", `
+                    ( "`"" + $targetFiles[ $i - 1 ].FullName + "`"" )
+            }
+
             $exifLensModel = $frame.lens
             $exifExposureTime = $frame.shutterSpeed.Substring( 0, $frame.shutterSpeed.Length - 1 )
             $exifFNumber = [ Math ]::Round( $frame.aperture, 1, [ MidpointRounding ]::AwayFromZero )
@@ -53,12 +62,14 @@ do {
             Start-Process -FilePath $exiftool -NoNewWindow -Wait -ArgumentList `
                 ( "-exif:Make=`"" + $exifMake + "`"" ) `
                 , ( "-exif:Model=`"" + $exifModel + "`"" ) `
+                , ( "-xmp-Microsoft:CameraSerialNumber=`"" + $exifSerial + "`"" ) `
                 , ( "-exif:LensModel=`"" + $exifLensModel + "`"" ) `
+                , ( "-xmp-Microsoft:LensModel=`"" + $exifLensModel + "`"" ) `
                 , ( "-exif:ExposureTime=" + $exifExposureTime ) `
                 , ( "-exif:FNumber=" + $exifFNumber ) `
                 , ( "-exif:ISO=" + $exifIso ) `
                 , ( "-exif:FocalLength=`"" + $exifFocalLength + "`"" ) `
-                , ( "-exif:FocalLengthIn35mmFormat=`"" + $exifFocalLengthIn35mmFormat + "`"" ) `
+                , ( "-exif:FocalLengthIn35mmFormat=`"" + $exifFocalLengthIn35mmFormat + " mm`"" ) `
                 , "-exif:FileSource=1" `
                 , ( "-exif:Flash#=" + $exifFlash ) `
                 , ( "-exif:DateTimeOriginal=`"" + $exifDateTimeOriginal + "`"" ) `
@@ -67,6 +78,7 @@ do {
                 , ( "-exif:GPSLatitudeRef=" + $exifGPSLatitudeRef ) `
                 , ( "-exif:GPSLongitude=" + $exifGPSLongitude ) `
                 , ( "-exif:GPSLongitudeRef=" + $exifGPSLongitudeRef ) `
+                , ( "-comment=`"[Digitize] " + $existingExif + "`"" ) `
                 , ( "`"" + $targetFiles[ $i - 1 ].FullName + "`"" )
         }
     }
